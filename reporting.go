@@ -2,6 +2,7 @@ package dv360
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"google.golang.org/api/doubleclickbidmanager/v2"
 	"math"
@@ -63,7 +64,7 @@ func getReportCsvUrl(service *doubleclickbidmanager.QueriesService, queryId int6
 			return status.Metadata.GoogleCloudStoragePath, nil
 			// success
 		} else if "FAILED" == status.Metadata.Status.State {
-			return "", err
+			return "", errors.New("reporting-failed")
 		}
 	}
 
