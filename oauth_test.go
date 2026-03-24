@@ -17,7 +17,7 @@ func TestGetOauthTokens(t *testing.T) {
 
 	t.Logf("OAuth install url:\n%s\n\n", GetOauthInstallUrl(redirectUrl))
 
-	if authCode := os.Getenv("GOOGLE_OAUTH_AUTH_CODE"); authCode != "" {
+	if authCode := os.Getenv("GOOGLE_OAUTH_CODE"); authCode != "" {
 		if token, err := GetOauthTokens(redirectUrl, os.Getenv("GOOGLE_OAUTH_CODE")); nil != err {
 			t.Error(err)
 		} else if refresh := token.RefreshToken; len(refresh) == 0 {
