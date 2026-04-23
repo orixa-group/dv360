@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const emptyIndicator = "No data returned by the reporting service."
+
 // convertCsvToArray Convert a csv content as rows of struct where csv headers are map keys
 // Struct fields json tag values must match csv header (lower case & spaces replaced with _ )
 // Ex csv with headers as 'Campaign ID', 'Impressions', 'Total Conversions'
@@ -14,6 +16,7 @@ import (
 func convertCsvToArray[T any](r io.Reader) ([]*T, error) {
 	csvReader := csv.NewReader(r)
 	csvReader.Comma = ','
+	csvReader.FieldsPerRecord = -1
 
 	headers := []string{}
 	results := make([]*T, 0)
@@ -24,7 +27,13 @@ func convertCsvToArray[T any](r io.Reader) ([]*T, error) {
 			break
 		} else if err != nil {
 			return nil, err
-		} else if len(records) > 0 && len(records[0]) == 0 {
+		}
+
+		if len(records) == 1 && records[0] == emptyIndicator {
+			return results, nil
+		}
+
+		if len(records) > 0 && len(records[0]) == 0 {
 			// stop when first cell has empty value
 			break
 		}
@@ -33,12 +42,17 @@ func convertCsvToArray[T any](r io.Reader) ([]*T, error) {
 			for _, record := range records {
 				headers = append(headers, slugify(record))
 			}
-		} else if len(records[0]) > 0 {
+		} else {
+			if len(records) != len(headers) {
+				break
+			}
+
 			// convert as map to marshal/unmarshall in structure
 			dataAsMap := map[string]string{}
 			for i, record := range records {
 				dataAsMap[headers[i]] = record
 			}
+
 			buf, _ := json.Marshal(dataAsMap)
 			var row T
 			if err = json.Unmarshal(buf, &row); err != nil {
