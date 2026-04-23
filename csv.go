@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const emptyIndicator = "No data returned by the reporting service."
+
 // convertCsvToArray Convert a csv content as rows of struct where csv headers are map keys
 // Struct fields json tag values must match csv header (lower case & spaces replaced with _ )
 // Ex csv with headers as 'Campaign ID', 'Impressions', 'Total Conversions'
@@ -27,7 +29,7 @@ func convertCsvToArray[T any](r io.Reader) ([]*T, error) {
 			return nil, err
 		}
 
-		if len(records) == 1 && records[0] == "No data returned by the reporting service." {
+		if len(records) == 1 && records[0] == emptyIndicator {
 			return results, nil
 		}
 
