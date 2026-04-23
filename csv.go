@@ -14,6 +14,7 @@ import (
 func convertCsvToArray[T any](r io.Reader) ([]*T, error) {
 	csvReader := csv.NewReader(r)
 	csvReader.Comma = ','
+	csvReader.FieldsPerRecord = -1
 
 	headers := []string{}
 	results := make([]*T, 0)
@@ -24,7 +25,13 @@ func convertCsvToArray[T any](r io.Reader) ([]*T, error) {
 			break
 		} else if err != nil {
 			return nil, err
-		} else if len(records) > 0 && len(records[0]) == 0 {
+		}
+
+		if len(records) == 1 && records[0] == "No data returned by the reporting service." {
+			return results, nil
+		}
+
+		if len(records) > 0 && len(records[0]) == 0 {
 			// stop when first cell has empty value
 			break
 		}
@@ -33,12 +40,17 @@ func convertCsvToArray[T any](r io.Reader) ([]*T, error) {
 			for _, record := range records {
 				headers = append(headers, slugify(record))
 			}
-		} else if len(records[0]) > 0 {
+		} else {
+			if len(records) != len(headers) {
+				break
+			}
+
 			// convert as map to marshal/unmarshall in structure
 			dataAsMap := map[string]string{}
 			for i, record := range records {
 				dataAsMap[headers[i]] = record
 			}
+
 			buf, _ := json.Marshal(dataAsMap)
 			var row T
 			if err = json.Unmarshal(buf, &row); err != nil {
